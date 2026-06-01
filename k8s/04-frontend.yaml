@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-frontend
+  labels:
+    app: todo-app
+    tier: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          # Dieses Image läuft garantiert ohne Root-Rechte auf OpenShift
+          image: docker.io/nginxinc/nginx-unprivileged:alpine
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    app: todo-app
+    tier: frontend
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: todo-app
+    tier: frontend
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: todo-app-route
+  labels:
+    app: todo-app
+spec:
+  to:
+    kind: Service
+    name: frontend-service
+  port:
+    targetPort: 8080

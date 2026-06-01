@@ -1,0 +1,52 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: todo-backend
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        tier: backend
+    spec:
+      containers:
+        - name: backend
+          image: docker.io/library/node:18-alpine
+          command: ["sh", "-c", "while true; do echo -e 'HTTP/1.1 200 OK\n\nBackend Simulation laeuft...' | nc -l -p 8080; done"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "todo_user"
+            - name: DB_PASSWORD
+              value: "todo_secure_pass"
+            - name: DB_NAME
+              value: "todo_db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  labels:
+    app: todo-app
+    tier: backend
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: todo-app
+    tier: backend
+  type: ClusterIP
